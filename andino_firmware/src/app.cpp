@@ -72,12 +72,20 @@
 #include "motor.h"
 #include "pid.h"
 
+/*BNO055 Imu  */
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BNO055.h>
+#include <utility/imumaths.h>
+
 // TODO(jballoffet): Move this variables to a different module.
 
 /* Track the next time we make a PID calculation */
 unsigned long nextPID = andino::Constants::kPidPeriod;
 
 long lastMotorCommand = andino::Constants::kAutoStopWindow;
+
+bool HAS_IMU = true;
 
 // A pair of varibles to help parse serial commands
 int arg = 0;
@@ -127,6 +135,15 @@ void App::setup() {
 
   left_pid_controller_.reset(left_encoder_.read());
   right_pid_controller_.reset(right_encoder_.read());
+
+  /* Initialise the IMU sensor */
+  if(!bno.begin())
+  {
+    /* There was a problem detecting the BNO055 ... check your connections */
+    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+    HAS_IMU = false;
+  }
+  bno.setExtCrystalUse(true);
 }
 
 void App::loop() {
@@ -302,6 +319,47 @@ void App::run_command() {
       Serial.print(" ");
       Serial.println(pid_args[3]);
       Serial.println("OK");
+      break;
+    case HAVE_IMU:
+      Serial.println(HAS_IMU);   
+      break;
+    case READ_ENCODERS_AND_IMU:
+     { 
+      Serial.print(left_encoder.read());
+      Serial.print(" ");
+      Serial.print(right_encoder.read());
+      Serial.print(" ");
+      // Quaternion data
+      imu::Quaternion quat = bno.getQuat();
+      Serial.print(quat.x(), 4);
+      Serial.print(" ");
+      Serial.print(quat.y(), 4);
+      Serial.print(" ");
+      Serial.print(quat.z(), 4);
+      Serial.print(" ");
+      Serial.print(quat.w(), 4);
+      Serial.print(" ");
+
+      /* Display the floating point data */
+      imu::Vector<3> euler_angvel = bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
+      Serial.print(euler_angvel.x());
+      Serial.print(" ");
+      Serial.print(euler_angvel.y());
+      Serial.print(" ");
+      Serial.print(euler_angvel.z());
+      Serial.print(" ");
+
+      /* Display the floating point data */
+      imu::Vector<3> euler_linearaccel = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
+      Serial.print(euler_linearaccel.x());
+      Serial.print(" ");
+      Serial.print(euler_linearaccel.y());
+      Serial.print(" ");
+      Serial.print(euler_linearaccel.z());
+      Serial.print("\t\t");
+
+      Serial.println("OK");
+     }
       break;
     default:
       Serial.println("Invalid Command");

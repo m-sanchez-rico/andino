@@ -32,6 +32,7 @@
 #include "encoder.h"
 #include "motor.h"
 #include "pid.h"
+#include <Adafruit_BNO055.h>
 
 namespace andino {
 
@@ -67,6 +68,8 @@ class App {
   /// PID controllers (one per wheel).
   static PID left_pid_controller_;
   static PID right_pid_controller_;
+
+  static Adafruit_BNO055 bno_;
 };
 
 }  // namespace andino

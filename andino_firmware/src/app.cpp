@@ -120,6 +120,8 @@ PID App::left_pid_controller_(Constants::kPidKp, Constants::kPidKd, Constants::k
 PID App::right_pid_controller_(Constants::kPidKp, Constants::kPidKd, Constants::kPidKi,
                                Constants::kPidKo, -Constants::kPwmMax, Constants::kPwmMax);
 
+Adafruit_BNO055 App::bno_{55, BNO055_ADDRESS_A, &Wire};
+
 void App::setup() {
   // Required by Arduino libraries to work.
   init();
@@ -137,13 +139,13 @@ void App::setup() {
   right_pid_controller_.reset(right_encoder_.read());
 
   /* Initialise the IMU sensor */
-  if(!bno.begin())
+  if(!bno_.begin())
   {
     /* There was a problem detecting the BNO055 ... check your connections */
     Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
     HAS_IMU = false;
   }
-  bno.setExtCrystalUse(true);
+  bno_.setExtCrystalUse(true);
 }
 
 void App::loop() {
@@ -325,12 +327,12 @@ void App::run_command() {
       break;
     case READ_ENCODERS_AND_IMU:
      { 
-      Serial.print(left_encoder.read());
+      Serial.print(left_encoder_.read());
       Serial.print(" ");
-      Serial.print(right_encoder.read());
+      Serial.print(right_encoder_.read());
       Serial.print(" ");
       // Quaternion data
-      imu::Quaternion quat = bno.getQuat();
+      imu::Quaternion quat = bno_.getQuat();
       Serial.print(quat.x(), 4);
       Serial.print(" ");
       Serial.print(quat.y(), 4);
@@ -341,7 +343,7 @@ void App::run_command() {
       Serial.print(" ");
 
       /* Display the floating point data */
-      imu::Vector<3> euler_angvel = bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
+      imu::Vector<3> euler_angvel = bno_.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
       Serial.print(euler_angvel.x());
       Serial.print(" ");
       Serial.print(euler_angvel.y());
@@ -350,7 +352,7 @@ void App::run_command() {
       Serial.print(" ");
 
       /* Display the floating point data */
-      imu::Vector<3> euler_linearaccel = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
+      imu::Vector<3> euler_linearaccel = bno_.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
       Serial.print(euler_linearaccel.x());
       Serial.print(" ");
       Serial.print(euler_linearaccel.y());
